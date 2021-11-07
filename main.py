@@ -5,18 +5,11 @@ from uuid import UUID, uuid4
 from fastapi import FastAPI, HTTPException
 from fastapi.params import Body
 from models import SubjectIn, SubjectOut
+# substituir ao implementar a conexao com o banco de dados
+from utils import dummy_database as db
 
 
 app = FastAPI()
-
-
-subjects = [{
-    "subject_id": "08c4ff5e-a854-4a4b-833a-211dd77fc6da",
-    "name": "Microdados",
-    "annotation": "Disciplina de banco de dados",
-    "professor": "Fabio Toshimoto",
-    "notes": []
-}]
 
 
 @app.get("/")
@@ -49,17 +42,14 @@ async def create_subject(
     )
 ):
 
-    already_exists = len([
-        item for item in subjects if item["name"] == subject.name
-    ]) > 0
+    already_exists = db.has(value=subject.name, key='name')
 
     if already_exists:
         raise HTTPException(
             status_code=400, detail=f"Subject with name '{subject.name}' already exists")
 
     subject_dict = subject.dict()
-    subject_dict.update({"subject_id": uuid4()})
-    subjects.append(subject_dict)
+    db.insert(subject_dict)
 
     return subject_dict
 
@@ -67,24 +57,34 @@ async def create_subject(
 # O usuário pode listar os nomes de suas disciplinas
 @app.get('/subject', response_model=List[SubjectOut])
 async def list_subjects():
-    return subjects
+    return db.list()
 
 
 # O usuário pode deletar uma disciplina
 @app.delete('/subject/{subject_id}')
 async def delete_subject(subject_id: UUID):
-    global subjects
-    subjects = [
-        subject for subject in subjects if subject['subject_id'] != str(subject_id)]
+    db.delete_by_id(subject_id)
 
 
 # O usuário pode modificar as informações de uma disciplina INCLUINDO seu nome
 @app.patch('/subject/{subject_id}', response_model=SubjectOut)
 async def update_subject(subject_id: UUID, subject: SubjectIn):
     # name, annotation, professor, notes
-    subject_dict = subject.dict()
 
-    pass
+    old = db.find_by_id(subject_id)
+    if not old:
+        raise HTTPException(
+            404, detail=f"Subject with id '{subject_id}' not found")
+
+    # valida alterações de nome
+    # se já existe alguma disciplane com esse nome e se a
+    # disciplina nao for a que está sendo alterada, devemos retornar um erro
+    if db.has(subject.name, 'name') and old["name"] != subject.name:
+        raise HTTPException(
+            400, detail=f"Subject with name '{subject.name}' already exists")
+
+    new = db.update_by_id(subject_id, subject.dict())
+    return new
 
     # O usuário pode adicionar uma nota a uma disciplina
     # O usuário pode deletar uma nota de uma disciplina
