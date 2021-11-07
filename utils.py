@@ -32,7 +32,9 @@ class DummyDatabase:
     def update_by_id(self, subject_id, data: dict):
         for index, subject in enumerate(self._database):
             if subject["subject_id"] == str(subject_id):
-                subject.update(data)
+                for key, value in data.items():
+                    if value != None:
+                        subject[key] = value
                 self._database[index] = subject
                 return {**subject}
 
