@@ -30,6 +30,12 @@ class DummyDatabase:
                 return True
         return False
 
+    def has_note(self, subject_id, note_id) -> bool:
+        subject = self.find_by_id(subject_id)
+        note_exists = len([note for note in subject['notes']
+                          if note_id == note["note_id"]]) > 0
+        return note_exists
+
     def delete_by_id(self, subject_id):
         self._database = [
             subject for subject in self._database if subject["subject_id"] != str(subject_id)]
@@ -69,6 +75,7 @@ class DummyDatabase:
 
 
 dummy_database = DummyDatabase()
+
 dummy_database.insert({
     "subject_id": "08c4ff5e-a854-4a4b-833a-211dd77fc6da",
     "name": "Microdados",
