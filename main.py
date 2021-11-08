@@ -1,17 +1,28 @@
 # coding utf-8
 
-from os import name
 from typing import List
 from uuid import UUID, uuid4
 from fastapi import FastAPI, HTTPException
-from fastapi.param_functions import Path
-from fastapi.params import Body, Param
+from fastapi.params import Body, Path
 from models import AddNote, Note, SubjectIn, SubjectOut
 # substituir ao implementar a conexao com o banco de dados
 from utils import dummy_database as db
+from uuid import uuid4
 
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "subjects",
+        "description": "CRUD operations involving subjects. You can **create**, **read**, **update** and **delete** subjects."
+    },
+    {
+        "name": "notes",
+        "description": "Manage notes. These routes offer **CRUD** operations for subjects' notes."
+    },
+]
+
+
+app = FastAPI(openapi_tags=tags_metadata)
 
 
 @app.get("/")
@@ -19,7 +30,7 @@ async def root():
     return {"app": "megadados"}
 
 
-@app.post('/subject', response_model=SubjectOut, name="Create subject")
+@app.post('/subject', response_model=SubjectOut, name="Create subject", tags=['subjects'])
 async def create_subject(
     subject: SubjectIn = Body(
         ...,
@@ -43,28 +54,28 @@ async def create_subject(
     return subject_dict
 
 
-@app.get('/subject', response_model=List[str], name="List all subjects names")
+@app.get('/subject', response_model=List[str], name="List all subjects names", tags=['subjects'])
 async def list_subject_name():
     return [subject['name'] for subject in db.list()]
 
 
-@app.get('/subjects', response_model=List[SubjectOut], name="List all subjects")
+@app.get('/subjects', response_model=List[SubjectOut], name="List all subjects", tags=['subjects'])
 async def list_subjects():
     return db.list()
 
 
-@app.delete('/subject/{subject_id}', response_model=None)
+@app.delete('/subject/{subject_id}', response_model=None, tags=['subjects'])
 async def delete_subject(
         subject_id: UUID = Path(
-            ..., example="69c880b4-ae6c-4c85-832d-420124e50fde"
+            ..., example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
         )):
     db.delete_by_id(subject_id)
 
 
-@app.patch('/subject/{subject_id}', response_model=SubjectOut)
+@app.patch('/subject/{subject_id}', response_model=SubjectOut, tags=['subjects'])
 async def update_subject(
         subject_id: UUID = Path(
-            ..., example="69c880b4-ae6c-4c85-832d-420124e50fde"
+            ..., example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
         ),
         subject: SubjectIn = Body(
             ..., example={
@@ -90,11 +101,11 @@ async def update_subject(
     return new
 
 
-@app.post('/note/{subject_id}', response_model=List[Note])
+@app.post('/note/{subject_id}', response_model=List[Note], tags=['notes'])
 async def add_note(
     subject_id: UUID = Path(
         ...,
-        example="1e3f4915-d9a5-4777-9d43-11e21b4f296f"
+        example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
     ),
     body: AddNote = Body(
         ...,
@@ -112,15 +123,15 @@ async def add_note(
     return subject_notes
 
 
-@app.delete('/note/{subject_id}/{note_id}', response_model=None)
+@app.delete('/note/{subject_id}/{note_id}', response_model=None, tags=['notes'])
 async def delete_note(
         subject_id: UUID = Path(
             ...,
-            example="69c880b4-ae6c-4c85-832d-420124e50fde"
+            example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
         ),
         note_id: UUID = Path(
             ...,
-            example="c89d13ca-0ca2-4d12-a4e5-099019584024"
+            example="03401e80-4d71-415f-9146-5ef734a5c22d"
         )):
     subject_exists = db.has(str(subject_id))
 
@@ -128,14 +139,19 @@ async def delete_note(
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
+    note_exists = db.has_note(str(subject_id), str(note_id))
+    if not note_exists:
+        raise HTTPException(
+            404, detail=f"Note with id '{note_id}' does not exist in the subject with id '{subject_id}'")
+
     db.delete_note(str(subject_id), str(note_id))
 
 
-@app.get('/note/{subject_id}', response_model=List[Note])
+@app.get('/note/{subject_id}', response_model=List[Note], tags=['notes'])
 async def list_notes(
         subject_id: UUID = Path(
             ...,
-            example="69c880b4-ae6c-4c85-832d-420124e50fde"
+            example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
         )):
     subject = db.find_by_id(str(subject_id))
 
@@ -146,15 +162,15 @@ async def list_notes(
     return subject['notes']
 
 
-@app.patch('/note/{subject_id}/{note_id}', response_model=List[Note])
+@app.patch('/note/{subject_id}/{note_id}', response_model=List[Note], tags=['notes'])
 async def update_note(
         subject_id: UUID = Path(
             ...,
-            example="69c880b4-ae6c-4c85-832d-420124e50fde"
+            example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
         ),
         note_id: UUID = Path(
             ...,
-            example="c89d13ca-0ca2-4d12-a4e5-099019584024"
+            example="03401e80-4d71-415f-9146-5ef734a5c22d"
         ),
         data: AddNote = Body(
             ...,
@@ -167,6 +183,11 @@ async def update_note(
     if not subject_exists:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
+
+    note_exists = db.has_note(str(subject_id), str(note_id))
+    if not note_exists:
+        raise HTTPException(
+            404, detail=f"Note with id '{note_id}' does not exist in the subject with id '{subject_id}'")
 
     updated_notes = db.update_note(str(subject_id), str(note_id), data.note)
     return updated_notes
