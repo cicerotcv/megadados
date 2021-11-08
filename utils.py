@@ -11,6 +11,19 @@ class DummyDatabase:
             subject["subject_id"] = str(uuid4())
         self._database.append(subject)
 
+    def insert_note(self, subject_id, note_value):
+        subject = self.find_by_id(subject_id)
+        subject_notes: list = subject["notes"]
+
+        new_note = {
+            'note_id': uuid4(),
+            'value': note_value
+        }
+
+        subject_notes.append(new_note)
+        self.update_by_id(subject_id, {"notes": subject_notes})
+        return subject_notes
+
     def has(self, value, key="subject_id") -> bool:
         for subject in self._database:
             if subject[key] == value:
@@ -20,6 +33,22 @@ class DummyDatabase:
     def delete_by_id(self, subject_id):
         self._database = [
             subject for subject in self._database if subject["subject_id"] != str(subject_id)]
+
+    def delete_note(self, subject_id, note_id):
+        subject = self.find_by_id(subject_id)
+        notes = [note for note in subject["notes"]
+                 if note_id != str(note['note_id'])]
+        self.update_by_id(subject_id, {"notes": notes})
+        return notes
+
+    def update_note(self, subject_id, note_id, value: float):
+        subject = self.find_by_id(subject_id)
+        notes = subject['notes']
+        for note in notes:
+            if str(note['note_id']) == note_id:
+                note['value'] = value
+                break
+        return self.update_by_id(subject_id, {"notes": notes})["notes"]
 
     def find_by_id(self, subject_id):
         for subject in self._database:
@@ -45,7 +74,10 @@ dummy_database.insert({
     "name": "Microdados",
     "annotation": "Disciplina de banco de dados",
     "professor": "Fabio Toshimoto",
-    "notes": []
+    "notes": [{
+        "note_id": "03401e80-4d71-415f-9146-5ef734a5c22d",
+        "value": 3.5
+    }]
 })
 
 dummy_database.insert({
@@ -53,7 +85,10 @@ dummy_database.insert({
     "name": "Nuvem",
     "annotation": "Disciplina de redes",
     "professor": "Andrew Montagner",
-    "notes": []
+    "notes": [{
+        "note_id": "c89d13ca-0ca2-4d12-a4e5-099019584024",
+        "value": 7.5
+    }]
 })
 
 dummy_database.insert({
@@ -61,5 +96,8 @@ dummy_database.insert({
     "name": "Design de Calculadoras",
     "annotation": "Disciplina de software",
     "professor": "Igor Ayres",
-    "notes": []
+    "notes": [{
+        "note_id": "1e3f4915-d9a5-4777-9d43-11e21b4f296f",
+        "value": 5.0
+    }]
 })
