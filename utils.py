@@ -68,7 +68,7 @@ class DummyDatabase:
         for index, subject in enumerate(self._database):
             if subject["subject_id"] == str(subject_id):
                 for key, value in data.items():
-                    if value != None:
+                    if value != None and value != []:
                         subject[key] = value
                 self._database[index] = subject
                 return {**subject}
