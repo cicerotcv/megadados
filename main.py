@@ -1,14 +1,8 @@
 # coding utf-8
 
-from typing import List
-from uuid import UUID
-from fastapi import FastAPI, HTTPException
-from fastapi.params import Body, Path
-from models import AddNote, Note
-from router_subjects import router as subjects_routes
 from router_notes import router as notes_routes
-# substituir ao implementar a conexao com o banco de dados
-from utils import dummy_database as db
+from router_subjects import router as subjects_routes
+from fastapi import FastAPI
 
 tags_metadata = [
     {
@@ -20,7 +14,6 @@ tags_metadata = [
         "description": "Manage notes. These routes offer **CRUD** operations for subjects' notes."
     },
 ]
-
 
 app = FastAPI(openapi_tags=tags_metadata)
 

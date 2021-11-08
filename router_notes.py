@@ -84,9 +84,7 @@ async def update_note(
         ),
         data: AddNote = Body(
             ...,
-            example={
-                'note': 5.6
-            }
+            example={'note': 5.6}
         )):
     subject_exists = db.has(str(subject_id))
 
