@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Body, Path
 from typing import List
 from uuid import UUID
-from models import SubjectIn, SubjectOut
+from schemas import SubjectIn, SubjectOut
 
 # substituir ao implementar a conexao com o banco de dados
 from utils import dummy_database as db

@@ -3,7 +3,7 @@ from fastapi import HTTPException, APIRouter
 from fastapi.params import Body, Path
 from typing import List
 from uuid import UUID
-from models import AddNote, Note
+from schemas import AddNote, Note
 
 # substituir ao implementar a conexao com o banco de dados
 from utils import dummy_database as db
