@@ -22,6 +22,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(openapi_tags=tags_metadata)
 
+
 @app.get("/")
 async def root():
     return {"app": "megadados"}

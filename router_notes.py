@@ -1,16 +1,11 @@
 
-from fastapi import HTTPException, APIRouter
-from fastapi.params import Body, Path, Depends
-from typing import List
-from schemas import AddNote, Note
-
+from fastapi import APIRouter, HTTPException
+from fastapi.params import Body, Depends, Path
 from sqlalchemy.orm.session import Session
 
-# substituir ao implementar a conexao com o banco de dados
-# from utils import dummy_database as db
-
-from database import get_db
 import crud
+from database import get_db
+from schemas import AddNote
 
 router = APIRouter(prefix='/note', tags=['notes'])
 
@@ -34,7 +29,8 @@ async def add_note(
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    subject_note = crud.create_subject_note(db, note = body.note, subject_id =subject_id)
+    subject_note = crud.create_subject_note(
+        db, note=body.note, subject_id=subject_id)
 
     return subject_note
 
@@ -110,11 +106,10 @@ async def update_note(
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-   
     if not old_note:
         raise HTTPException(
             404, detail=f"Note with id '{note_id}' does not exist in the subject with id '{subject_id}'")
 
-    new = crud.update_note_by_id(db,note_id = note_id, note = data)
+    new = crud.update_note_by_id(db, note_id=note_id, note=data)
 
     return new
