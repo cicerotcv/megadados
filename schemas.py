@@ -1,12 +1,11 @@
 from typing import List, Optional
 from pydantic import BaseModel
 from pydantic.fields import Field
-from pydantic.types import UUID
 
 NoteValidator = Field(..., ge=0, le=10, description="User note for a subject")
 
 SubjectNameValidator = Field(..., title="Subject Name",
-                             description="Name of this subject (must be unique)",  min_length=3, max_length=40)
+                             description="Name of this subject (must be unique)",  min_length=0, max_length=40)
 
 SubjectAnnotationValidator = Field(None, title="Subject Annotation",
                                    description="Optional annotation for this subject", max_length=100)
@@ -23,9 +22,12 @@ class AddNote(BaseModel):
 
 
 class Note(BaseModel):
-    note_id: UUID
+    note_id: int
     value: float = NoteValidator
+    subject: int
 
+    class Config:
+        orm_mode = True
 
 class SubjectIn(BaseModel):
     name: str = SubjectNameValidator
@@ -33,10 +35,12 @@ class SubjectIn(BaseModel):
     professor: Optional[str] = SubjectProfessorValidator
     notes: List[Note] = SubjectNotesValidator
 
-
 class SubjectOut(BaseModel):
-    subject_id: Optional[UUID] = None
+    subject_id: Optional[int] = None
     name: str = SubjectNameValidator
     annotation: Optional[str] = SubjectAnnotationValidator
     professor: Optional[str] = SubjectProfessorValidator
     notes: List[Note] = SubjectNotesValidator
+
+    class Config:
+        orm_mode = True

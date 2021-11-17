@@ -1,24 +1,23 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Float
 from sqlalchemy.orm import relationship
-
-from .database import Base
+from typing import List
+from database import Base
 
 class Subject(Base):
     __tablename__ = "subjects"
 
-    subject_id=Column(Integer, primary_key=True, index=True)
+    subject_id=Column(Integer, primary_key=True, index=True, autoincrement=True)
     name=Column(String, unique=True, index=True)
     annotation=Column(String, nullable=True)
     professor=Column(String, nullable=True)
     
-    notes = relationship("Item", back_populates="owner")
-
+    notes = relationship("Note", back_populates="owner")
 
 class Note(Base):
     __tablename__ = "notes"
 
-    note_id = Column(Integer, primary_key=True, index=True)
+    note_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     value = Column(Float, index=True)
-    subject = Column(String, ForeignKey('subject.subject_id'))
+    subject = Column(Integer, ForeignKey('subjects.subject_id'))
 
     owner = relationship("Subject", back_populates="notes")
