@@ -73,8 +73,6 @@ async def update_subject(
         ),
         db: Session = Depends(get_db)):
 
-    # old = db.find_by_id(subject_id)
-
     old = crud.find_subject_by_id(db, subject_id)
 
     if not old:

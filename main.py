@@ -27,4 +27,4 @@ async def root():
     return {"app": "megadados"}
 
 app.include_router(subjects_routes)
-# app.include_router(notes_routes)
+app.include_router(notes_routes)

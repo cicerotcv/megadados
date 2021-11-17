@@ -15,7 +15,7 @@ import crud
 router = APIRouter(prefix='/note', tags=['notes'])
 
 
-@router.post('/{subject_id}', response_model=List[Note])
+@router.post('/{subject_id}')
 async def add_note(
     subject_id: int = Path(
         ...,
@@ -29,8 +29,6 @@ async def add_note(
 ):
 
     db_subject = crud.find_subject_by_id(db, subject_id=subject_id)
-    
-    # subject_exists = db.has(str(subject_id))
 
     if not db_subject:
         raise HTTPException(
@@ -53,8 +51,6 @@ async def delete_note(
         ),
         db: Session = Depends(get_db)):
 
-    # subject_exists = db.has(str(subject_id))
-
     old_subject = crud.find_subject_by_id(db, subject_id)
 
     old_note = crud.find_note_by_id(db, note_id)
@@ -63,7 +59,6 @@ async def delete_note(
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    # note_exists = db.has_note(str(subject_id), str(note_id))
     if not old_note:
         raise HTTPException(
             404, detail=f"Note with id '{note_id}' does not exist in the subject with id '{subject_id}'")
@@ -71,33 +66,35 @@ async def delete_note(
     crud.delete_note_by_id(db, note_id=note_id)
 
 
-@router.get('/{subject_id}', response_model=List[Note])
-async def list_notes(
+@router.get('/{subject_id}')
+async def list_subject_notes(
         subject_id: int = Path(
             ...,
             example=3
         ),
-        skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+        skip: int = 0, limit: int = 100,
+        db: Session = Depends(get_db)):
 
-    # subject = db.find_by_id(str(subject_id))
-    old_subject = crud.find_subject_by_id(db, subject_id)
+    subject = crud.find_subject_by_id(db, subject_id)
 
-    if not old_subject:
+    if not subject:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    return old_subject['notes']
+    notes = crud.get_notes(db, subject_id)
+
+    return notes
 
 
-@router.patch('/{subject_id}/{note_id}', response_model=List[Note])
+@router.patch('/{subject_id}/{note_id}')
 async def update_note(
         subject_id: int = Path(
             ...,
-            example=int
+            example=3
         ),
         note_id: int = Path(
             ...,
-            example=int
+            example=3
         ),
         data: AddNote = Body(
             ...,
@@ -105,21 +102,19 @@ async def update_note(
         ),
         db: Session = Depends(get_db)):
 
-    # subject_exists = db.has(str(subject_id))
-
-    old_subject = crud.find_subject_by_id(db, subject_id)
+    subject = crud.find_subject_by_id(db, subject_id)
 
     old_note = crud.find_note_by_id(db, note_id)
 
-    if not old_subject:
+    if not subject:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    # note_exists = db.has_note(str(subject_id), str(note_id))
+   
     if not old_note:
         raise HTTPException(
             404, detail=f"Note with id '{note_id}' does not exist in the subject with id '{subject_id}'")
 
-    new = crud.update_subject_by_id(db,note_id = note_id, note = data.dict())
+    new = crud.update_note_by_id(db,note_id = note_id, note = data)
 
     return new
