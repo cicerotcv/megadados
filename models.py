@@ -13,7 +13,7 @@ class Subject(Base):
     annotation = Column(String(100), nullable=True)
     professor = Column(String(30), nullable=True)
 
-    notes = relationship("Note", back_populates="owner")
+    notes = relationship("Note", back_populates="owner",  cascade="all, delete-orphan")
 
 
 class Note(Base):

@@ -192,7 +192,7 @@ def update_note_by_id(db: Session, note: schemas.Note, note_id: int):
     db.query(models.Note).filter(models.Note.note_id == note_id).update(
         note_data, synchronize_session="fetch")
     db.commit()
-    return note_data
+    return find_note_by_id(db, note_id)
 
 
 def delete_note_by_id(db: Session, note_id: int):

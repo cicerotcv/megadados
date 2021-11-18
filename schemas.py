@@ -30,11 +30,13 @@ class Note(BaseModel):
     class Config:
         orm_mode = True
 
+
 class SubjectIn(BaseModel):
     name: str = SubjectNameValidator
     annotation: Optional[str] = SubjectAnnotationValidator
     professor: Optional[str] = SubjectProfessorValidator
     notes: List[Note] = SubjectNotesValidator
+
 
 class SubjectOut(BaseModel):
     subject_id: Optional[int] = None

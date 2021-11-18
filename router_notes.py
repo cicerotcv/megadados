@@ -77,7 +77,7 @@ async def list_subject_notes(
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    notes = crud.get_notes(db, subject_id)
+    notes = crud.get_notes(db, subject_id, skip, limit)
 
     return notes
 
