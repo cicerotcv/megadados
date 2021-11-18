@@ -1,101 +1,115 @@
 
-from fastapi import HTTPException, APIRouter
-from fastapi.params import Body, Path
-from typing import List
-from uuid import UUID
-from models import AddNote, Note
+from fastapi import APIRouter, HTTPException
+from fastapi.params import Body, Depends, Path
+from sqlalchemy.orm.session import Session
 
-# substituir ao implementar a conexao com o banco de dados
-from utils import dummy_database as db
+import crud
+from database import get_db
+from schemas import AddNote
 
 router = APIRouter(prefix='/note', tags=['notes'])
 
 
-@router.post('/{subject_id}', response_model=List[Note])
+@router.post('/{subject_id}')
 async def add_note(
-    subject_id: UUID = Path(
+    subject_id: int = Path(
         ...,
-        example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
+        example=3
     ),
     body: AddNote = Body(
         ...,
         example={"note": 5}
-    )
+    ),
+    db: Session = Depends(get_db)
 ):
 
-    subject_exists = db.has(str(subject_id))
-    if not subject_exists:
+    db_subject = crud.find_subject_by_id(db, subject_id=subject_id)
+
+    if not db_subject:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    subject_notes = db.insert_note(subject_id, body.note)
+    subject_note = crud.create_subject_note(
+        db, note=body.note, subject_id=subject_id)
 
-    return subject_notes
+    return subject_note
 
 
 @router.delete('/{subject_id}/{note_id}', response_model=None)
 async def delete_note(
-        subject_id: UUID = Path(
+        subject_id: int = Path(
             ...,
-            example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
+            example=3
         ),
-        note_id: UUID = Path(
+        note_id: int = Path(
             ...,
-            example="03401e80-4d71-415f-9146-5ef734a5c22d"
-        )):
-    subject_exists = db.has(str(subject_id))
+            example=3
+        ),
+        db: Session = Depends(get_db)):
 
-    if not subject_exists:
+    old_subject = crud.find_subject_by_id(db, subject_id)
+
+    old_note = crud.find_note(db, subject_id, note_id)
+
+    if not old_subject:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    note_exists = db.has_note(str(subject_id), str(note_id))
-    if not note_exists:
+    if not old_note:
         raise HTTPException(
             404, detail=f"Note with id '{note_id}' does not exist in the subject with id '{subject_id}'")
 
-    db.delete_note(str(subject_id), str(note_id))
+    crud.delete_note_by_id(db, note_id=note_id)
 
 
-@router.get('/{subject_id}', response_model=List[Note])
-async def list_notes(
-        subject_id: UUID = Path(
+@router.get('/{subject_id}')
+async def list_subject_notes(
+        subject_id: int = Path(
             ...,
-            example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
-        )):
-    subject = db.find_by_id(str(subject_id))
+            example=3
+        ),
+        skip: int = 0, limit: int = 100,
+        db: Session = Depends(get_db)):
+
+    subject = crud.find_subject_by_id(db, subject_id)
 
     if not subject:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    return subject['notes']
+    notes = crud.get_notes(db, subject_id, skip, limit)
+
+    return notes
 
 
-@router.patch('/{subject_id}/{note_id}', response_model=List[Note])
+@router.patch('/{subject_id}/{note_id}')
 async def update_note(
-        subject_id: UUID = Path(
+        subject_id: int = Path(
             ...,
-            example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
+            example=3
         ),
-        note_id: UUID = Path(
+        note_id: int = Path(
             ...,
-            example="03401e80-4d71-415f-9146-5ef734a5c22d"
+            example=3
         ),
         data: AddNote = Body(
             ...,
             example={'note': 5.6}
-        )):
-    subject_exists = db.has(str(subject_id))
+        ),
+        db: Session = Depends(get_db)):
 
-    if not subject_exists:
+    subject = crud.find_subject_by_id(db, subject_id)
+
+    old_note = crud.find_note(db, subject_id, note_id)
+
+    if not subject:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' does not exist")
 
-    note_exists = db.has_note(str(subject_id), str(note_id))
-    if not note_exists:
+    if not old_note:
         raise HTTPException(
             404, detail=f"Note with id '{note_id}' does not exist in the subject with id '{subject_id}'")
 
-    updated_notes = db.update_note(str(subject_id), str(note_id), data.note)
-    return updated_notes
+    new = crud.update_note_by_id(db, note_id=note_id, note=data)
+
+    return new

@@ -1,82 +1,92 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.params import Body, Path
 from typing import List
-from uuid import UUID
-from models import SubjectIn, SubjectOut
 
-# substituir ao implementar a conexao com o banco de dados
-from utils import dummy_database as db
+from fastapi import APIRouter, HTTPException
+from fastapi.params import Body, Depends, Path
+from sqlalchemy.orm.session import Session
 
+import crud
+from database import get_db
+from schemas import SubjectOut
 
 router = APIRouter(prefix='/subject', tags=['subjects'])
 
 
 @router.post('', response_model=SubjectOut, name="Create subject")
 async def create_subject(
-    subject: SubjectIn = Body(
+    subject: SubjectOut = Body(
         ...,
         example={
             "name": "Microdados",
             "annotation": "Disciplina cheia de atividades",
             "professor": "Fabio Toshimoto"
         }
-    )
+    ),
+    db: Session = Depends(get_db)
 ):
 
-    already_exists = db.has(value=subject.name, key='name')
+    subject_exists = crud.find_subject(db,  name=subject.name)
 
-    if already_exists:
+    if subject_exists:
         raise HTTPException(
             status_code=400, detail=f"Subject with name '{subject.name}' already exists")
 
-    subject_dict = subject.dict()
-    db.insert(subject_dict)
-
-    return subject_dict
+    return crud.create_subject(db=db, subject=subject)
 
 
 @router.get('', response_model=List[str], name="List all subjects names")
-async def list_subject_name():
-    return [subject['name'] for subject in db.list()]
+async def list_subject_name(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+
+    subjects = crud.get_subjects_names(db=db, limit=limit, skip=skip)
+
+    return [subject.name for subject in subjects]
 
 
 @router.get('/list', response_model=List[SubjectOut], name="List all subjects")
-async def list_subjects():
-    return db.list()
+async def list_subjects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    subjects = crud.get_subjects(db, skip=skip, limit=limit)
+    return subjects
 
 
 @router.delete('/{subject_id}', response_model=None)
-async def delete_subject(
-        subject_id: UUID = Path(
-            ..., example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
-        )):
-    db.delete_by_id(subject_id)
+async def delete_subject_by_id(
+        subject_id: int = Path(
+            ..., example=3
+        ),
+        db: Session = Depends(get_db)):
+
+    crud.delete_subject_by_id(db, subject_id=subject_id)
 
 
 @router.patch('/{subject_id}', response_model=SubjectOut)
 async def update_subject(
-        subject_id: UUID = Path(
-            ..., example="08c4ff5e-a854-4a4b-833a-211dd77fc6da"
+        subject_id: int = Path(
+            ..., example=3
         ),
-        subject: SubjectIn = Body(
+        subject: SubjectOut = Body(
             ..., example={
                 "name": "Microdados",
                 "annotation": "Disciplina cheia de atividades",
                 "professor": "Fabio Toshimoto"
             }
-        )):
+        ),
+        db: Session = Depends(get_db)):
 
-    old = db.find_by_id(subject_id)
+    old = crud.find_subject_by_id(db, subject_id)
+
     if not old:
         raise HTTPException(
             404, detail=f"Subject with id '{subject_id}' not found")
 
-    # valida alterações de nome
-    # se já existe alguma disciplina com esse nome e se a
-    # disciplina nao for a que está sendo alterada, devemos retornar um erro
-    if db.has(subject.name, 'name') and old["name"] != subject.name:
-        raise HTTPException(
-            400, detail=f"Subject with name '{subject.name}' already exists")
+    name_has_changed = subject.name != old.name
 
-    new = db.update_by_id(subject_id, subject.dict())
+    if name_has_changed:
+        # verificar se existe outra disciplina com o nome escolhido
+        another_subject = crud.find_subject(db, subject.name)
+        name_is_duplicated = another_subject and another_subject.subject_id != subject.subject_id
+        if name_is_duplicated:
+            raise HTTPException(
+                400, detail=f"Subject with name '{subject.name}' already exists")
+
+    new = crud.update_subject_by_id(db, subject_id=subject_id, subject=subject)
+
     return new

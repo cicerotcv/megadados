@@ -1,42 +1,26 @@
-from typing import List, Optional
-from pydantic import BaseModel
-from pydantic.fields import Field
-from pydantic.types import UUID
+from sqlalchemy import Column, Float, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
-NoteValidator = Field(..., ge=0, le=10, description="User note for a subject")
-
-SubjectNameValidator = Field(..., title="Subject Name",
-                             description="Name of this subject (must be unique)",  min_length=3, max_length=40)
-
-SubjectAnnotationValidator = Field(None, title="Subject Annotation",
-                                   description="Optional annotation for this subject", max_length=100)
-
-SubjectProfessorValidator = Field(None, title="Subject Professor",
-                                  description="Professor name of this subject", max_length=30)
-
-SubjectNotesValidator = Field([], title="Subject Notes",
-                              description="Tests and homeworks scores of this subject")
+from database import Base
 
 
-class AddNote(BaseModel):
-    note: float = NoteValidator
+class Subject(Base):
+    __tablename__ = "subjects"
+
+    subject_id = Column(Integer, primary_key=True,
+                        index=True, autoincrement=True)
+    name = Column(String(40), unique=True, index=True)
+    annotation = Column(String(100), nullable=True)
+    professor = Column(String(30), nullable=True)
+
+    notes = relationship("Note", back_populates="owner",  cascade="all, delete-orphan")
 
 
-class Note(BaseModel):
-    note_id: UUID
-    value: float = NoteValidator
+class Note(Base):
+    __tablename__ = "notes"
 
+    note_id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    value = Column(Float, index=True)
+    subject = Column(Integer, ForeignKey('subjects.subject_id'))
 
-class SubjectIn(BaseModel):
-    name: str = SubjectNameValidator
-    annotation: Optional[str] = SubjectAnnotationValidator
-    professor: Optional[str] = SubjectProfessorValidator
-    notes: List[Note] = SubjectNotesValidator
-
-
-class SubjectOut(BaseModel):
-    subject_id: Optional[UUID] = None
-    name: str = SubjectNameValidator
-    annotation: Optional[str] = SubjectAnnotationValidator
-    professor: Optional[str] = SubjectProfessorValidator
-    notes: List[Note] = SubjectNotesValidator
+    owner = relationship("Subject", back_populates="notes")
