@@ -49,7 +49,7 @@ async def delete_note(
 
     old_subject = crud.find_subject_by_id(db, subject_id)
 
-    old_note = crud.find_note_by_id(db, note_id)
+    old_note = crud.find_note(db, subject_id, note_id)
 
     if not old_subject:
         raise HTTPException(
@@ -100,7 +100,7 @@ async def update_note(
 
     subject = crud.find_subject_by_id(db, subject_id)
 
-    old_note = crud.find_note_by_id(db, note_id)
+    old_note = crud.find_note(db, subject_id, note_id)
 
     if not subject:
         raise HTTPException(

@@ -1,11 +1,11 @@
 # coding utf-8
 
-from router_notes import router as notes_routes
-from router_subjects import router as subjects_routes
 from fastapi import FastAPI
 
 import models
 from database import engine
+from router_notes import router as notes_routes
+from router_subjects import router as subjects_routes
 
 tags_metadata = [
     {

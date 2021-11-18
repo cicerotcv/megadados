@@ -9,9 +9,9 @@ class Subject(Base):
 
     subject_id = Column(Integer, primary_key=True,
                         index=True, autoincrement=True)
-    name = Column(String, unique=True, index=True)
-    annotation = Column(String, nullable=True)
-    professor = Column(String, nullable=True)
+    name = Column(String(40), unique=True, index=True)
+    annotation = Column(String(100), nullable=True)
+    professor = Column(String(30), nullable=True)
 
     notes = relationship("Note", back_populates="owner")
 
