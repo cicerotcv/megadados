@@ -1,1 +1,8 @@
 site_name: Megadados FastAPI
+nav:
+  - Home: index.md
+  - Requirements: setup/requirements.md
+  - Installation: setup/installation.md
+  - Environment Variables: setup/environment-variables.md
+  - Running: running.md
+theme: readthedocs
