@@ -34,7 +34,7 @@ Follow these steps to install and set up the project:
     git clone https://github.com/cicerotcv/megadados
     ~~~
 
-2. Go to Predictor directory
+2. Go to megadados directory
     ~~~bash
     cd megadados
     ~~~
