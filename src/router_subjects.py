@@ -4,9 +4,9 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Body, Depends, Path
 from sqlalchemy.orm.session import Session
 
-import crud
-from database import get_db
-from schemas import SubjectOut
+from . import crud
+from .database import get_db
+from .schemas import SubjectOut
 
 router = APIRouter(prefix='/subject', tags=['subjects'])
 

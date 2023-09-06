@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-import models
-import schemas
+from . import models
+from . import schemas
 
 
 def find_subject_by_id(db: Session, subject_id: int):
@@ -14,11 +14,13 @@ def find_subject_by_id(db: Session, subject_id: int):
     Returns:
         Subject | None: devolve a correspondência se houver, caso contrário, None;
     """
-    return db.query(models.Subject).filter(models.Subject.subject_id == subject_id).first()
+    return (
+        db.query(models.Subject).filter(models.Subject.subject_id == subject_id).first()
+    )
 
 
 def find_subject(db: Session, name: str):
-    """Encontra na tabela de "subjects" alguma linha com a propriedade "name" corresponde 
+    """Encontra na tabela de "subjects" alguma linha com a propriedade "name" corresponde
 
     Args:
         db (Session): objeto de session do database
@@ -69,7 +71,8 @@ def create_subject(db: Session, subject: schemas.SubjectIn):
         Subject: disciplina criada
     """
     db_subject = models.Subject(
-        name=subject.name, annotation=subject.annotation, professor=subject.professor)
+        name=subject.name, annotation=subject.annotation, professor=subject.professor
+    )
     db.add(db_subject)
     db.commit()
     db.refresh(db_subject)
@@ -90,10 +93,11 @@ def update_subject_by_id(db: Session, subject: schemas.SubjectOut, subject_id: i
     subject_data = subject.dict()
     subject_data["subject_id"] = subject_id
 
-    del(subject_data['notes'])
+    del subject_data["notes"]
 
-    db.query(models.Subject).filter(models.Subject.subject_id ==
-                                    subject_id).update(subject_data, synchronize_session="fetch")
+    db.query(models.Subject).filter(models.Subject.subject_id == subject_id).update(
+        subject_data, synchronize_session="fetch"
+    )
     db.commit()
     return subject_data
 
@@ -103,7 +107,7 @@ def delete_subject_by_id(db: Session, subject_id: int):
 
     Args:
         db (Session): objeto de session do database
-        subject_id (int): id da disciplina 
+        subject_id (int): id da disciplina
     """
     subject = find_subject_by_id(db, subject_id)
 
@@ -116,7 +120,7 @@ def get_notes(db: Session, subject_id: int, skip: int = 0, limit: int = 100):
     """Lista notas de uma disciplina
 
     Args:
-        subject_id (int): id da disciplina 
+        subject_id (int): id da disciplina
         db (Session): objeto de session do database
         skip (int, optional): offset da busca. Por padrão é 0.
         limit (int, optional): limite de itens a serem baixados. Por padrão é 100.
@@ -124,7 +128,13 @@ def get_notes(db: Session, subject_id: int, skip: int = 0, limit: int = 100):
     Returns:
         List[Note]: lista de resultados
     """
-    return db.query(models.Note).filter(models.Note.subject == subject_id).offset(skip).limit(limit).all()
+    return (
+        db.query(models.Note)
+        .filter(models.Note.subject == subject_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def find_note(db: Session, subject_id: int, note_id: int):
@@ -133,12 +143,16 @@ def find_note(db: Session, subject_id: int, note_id: int):
     Args:
         db (Session): objeto de session do database
         note_id (int): id da nota da disciplina
-        subject_id (int): id da disciplina 
+        subject_id (int): id da disciplina
 
     Returns:
         Note | None: nota localizada
     """
-    return db.query(models.Note).filter(models.Note.subject == subject_id, models.Note.note_id == note_id).first()
+    return (
+        db.query(models.Note)
+        .filter(models.Note.subject == subject_id, models.Note.note_id == note_id)
+        .first()
+    )
 
 
 def find_note_by_id(db: Session, note_id: int):
@@ -159,7 +173,7 @@ def create_subject_note(db: Session, subject_id: int, note: schemas.Note):
 
     Args:
         db (Session): objeto de session do database
-        subject_id (int): id da disciplina 
+        subject_id (int): id da disciplina
         note (schemas.Note): objeto contendo o valor da nota
 
     Returns:
@@ -185,12 +199,13 @@ def update_note_by_id(db: Session, note: schemas.Note, note_id: int):
     """
     note_data = note.dict()
 
-    note_data['value'] = note_data['note']
+    note_data["value"] = note_data["note"]
 
-    del(note_data['note'])
+    del note_data["note"]
 
     db.query(models.Note).filter(models.Note.note_id == note_id).update(
-        note_data, synchronize_session="fetch")
+        note_data, synchronize_session="fetch"
+    )
     db.commit()
     return find_note_by_id(db, note_id)
 
