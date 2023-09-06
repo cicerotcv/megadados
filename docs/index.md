@@ -11,7 +11,7 @@ FastAPI is a modern, fast, and highly efficient web framework for building APIs 
 The primary goals of this project includes:
 
 - Subscribe/unsubscribe students to school subjects;
-- Input/edit/delete notes/grades to students' subjects;
+- Input/edit/delete notes/grades from students' subjects;
 
 ## Contributing
 
